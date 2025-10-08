@@ -18,9 +18,13 @@ const swaggerOptions = {
       description: 'Documentação da API de foco de incêndios florestais'
     },
     servers: [
+      // {
+      //   url: 'https://chama-control-95b7a5960e80.herokuapp.com/api',
+      //   description: 'Servidor Heroku'
+      // },
       {
-        url: 'https://chama-control-95b7a5960e80.herokuapp.com/api',
-        description: 'Servidor Heroku'
+      url: 'http://SEU_IP_DA_AWS/api', // Pode adicionar um placeholder para o futuro IP da AWS
+      description: 'Servidor AWS'
       },
       {
         url: 'http://localhost:3000/api',
@@ -45,10 +49,16 @@ const app = express()
 
 app.use(cors())
 
+app.use('/api', routes)
+
+app.use(express.static(path.join(__dirname, 'dist')));
+
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-
-app.use('/api', routes)
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
