@@ -1,4 +1,5 @@
 const express = require('express')
+const axios = require('axios');
 const FocusController = require('../api/controllers/FocusController.js')
 
 const focusController = new FocusController()
@@ -18,6 +19,34 @@ const router = express.Router()
 router.get('/hello', (req, res) => {
   res.send('Hello world')
 })
+
+/**
+ * @swagger
+ * /noticias:
+ * get:
+ * summary: Busca notícias sobre queimadas na API externa GNews
+ * tags: [Focos]
+ * responses:
+ * 200:
+ * description: Uma lista de artigos de notícias
+ * 500:
+ * description: Erro ao buscar notícias externas
+ */
+router.get('/noticias', async (req, res) => {
+  try {
+    const apiKey = process.env.GNEWS_API_KEY; // <-- Vai ler do .env do back-end
+    if (!apiKey) {
+      throw new Error('Chave da API de notícias não configurada no servidor.');
+    }
+    const url = `https://gnews.io/api/v4/search?q=queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")&country=br&max=${PAGE_SIZE}${dateFilter}&token=${API_KEY}`;
+    
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Erro ao buscar notícias do GNews:', error.message);
+    res.status(500).json({ error: 'Falha ao buscar notícias externas.' });
+  }
+});
 
 /**
  * @swagger
