@@ -23,22 +23,26 @@ router.get('/hello', (req, res) => {
 /**
  * @swagger
  * /noticias:
- * get:
- * summary: Busca notícias sobre queimadas na API externa GNews
- * tags: [Focos]
- * responses:
- * 200:
- * description: Uma lista de artigos de notícias
- * 500:
- * description: Erro ao buscar notícias externas
+ *  get:
+ *    summary: Busca notícias sobre queimadas na API externa GNews
+ *    tags: [Focos]
+ *    responses:
+ *      200:
+ *        description: Uma lista de artigos de notícias
+ *      500:
+ *        description: Erro ao buscar notícias externas
  */
 router.get('/noticias', async (req, res) => {
   try {
     const apiKey = process.env.GNEWS_API_KEY; // <-- Vai ler do .env do back-end
+    
     if (!apiKey) {
       throw new Error('Chave da API de notícias não configurada no servidor.');
     }
-    const url = `https://gnews.io/api/v4/search?q=queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")&country=br&max=${PAGE_SIZE}${dateFilter}&token=${API_KEY}`;
+    const PAGE_SIZE = 10;
+    const lastPublishedAt = req.query.to; 
+    let dateFilter = lastPublishedAt ? `&to=${lastPublishedAt}` : "";
+    const url = `https://gnews.io/api/v4/search?q=queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")&country=br&max=10${dateFilter}&token=${apiKey}`;
     
     const response = await axios.get(url);
     res.json(response.data);
