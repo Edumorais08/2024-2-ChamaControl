@@ -112,9 +112,10 @@ const Dashboard = () => {
             let response;
             
             if (selectedYear === 2025) {
-                response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusDailyEstatesMonth/${selectedMonth}`);
+                response = await axios.get(`/api/focusDailyEstatesMonth/${selectedMonth}`);
                 
-                const dataMap = new Map(response.data.map(item => [item.estado, item.quantidade_focos]));
+                const data = Array.isArray(response.data) ? response.data : [];
+                const dataMap = new Map(data.map(item => [item.estado, item.quantidade_focos]));
                 
                 const formattedData = estados.map(estado => ({
                     estado: estado.label,
@@ -132,13 +133,14 @@ const Dashboard = () => {
                     }]
                 });
             } else {
-                response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusEstateMonthYear/${selectedMonth}/${selectedYear}`);
+                response = await axios.get(`/api/focusEstateMonthYear/${selectedMonth}/${selectedYear}`);
                 
+                const data = Array.isArray(response.data) ? response.data : [];
                 setEstateMonthData({
-                    labels: response.data.map(item => item.estado),
+                    labels: data.map(item => item.estado),
                     datasets: [{
                         label: 'Focos de Incêndio',
-                        data: response.data.map(item => parseInt(item.quantidade_focos)),
+                        data: data.map(item => parseInt(item.quantidade_focos)),
                         backgroundColor: '#f57c00',
                         borderColor: '#f57c00',
                         borderWidth: 1
@@ -155,12 +157,14 @@ const Dashboard = () => {
     const fetchRegionData = async () => {
         try {
             setLoadingRegion(true);
-            const regionMonth = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusRegionYear/${selectedRegionYear}`);
+            const regionMonth = await axios.get(`/api/focusRegionYear/${selectedRegionYear}`);
+            
+            const regionData = Array.isArray(regionMonth.data) ? regionMonth.data : [];
             setRegionMonthData({
-                labels: regionMonth.data.map(item => item.regiao),
+                labels: regionData.map(item => item.regiao),
                 datasets: [{
                     label: 'Focos de Incêndio',
-                    data: regionMonth.data.map(item => parseInt(item.quantidade_focos)),
+                    data: regionData.map(item => parseInt(item.quantidade_focos)),
                     backgroundColor: [
                         'rgba(245, 124, 0, 0.5)',
                         'rgba(255, 193, 7, 0.5)',
@@ -175,17 +179,18 @@ const Dashboard = () => {
                         'rgba(33, 150, 243, 1)',
                         'rgba(156, 39, 176, 1)',
                     ],
-
                     borderWidth: 1
                 }]
             });
 
-            const biomeMonth = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusBiomesYear/${selectedRegionYear}`);
+            const biomeMonth = await axios.get(`/api/focusBiomesYear/${selectedRegionYear}`);
+
+            const biomeData = Array.isArray(biomeMonth.data) ? biomeMonth.data : [];
             setBiomeMonthData({
-                labels: biomeMonth.data.map(item => item.bioma),
+                labels: biomeData.map(item => item.bioma),
                 datasets: [{
                     label: 'Focos de Incêndio',
-                    data: biomeMonth.data.map(item => parseInt(item.quantidade_focos)),
+                    data: biomeData.map(item => parseInt(item.quantidade_focos)),
                     backgroundColor: [
                         'rgba(245, 124, 0, 0.5)',
                         'rgba(255, 193, 7, 0.5)',
@@ -202,7 +207,6 @@ const Dashboard = () => {
                         'rgba(156, 39, 176, 1)',
                         'rgb(187, 33, 33)',
                     ],
-
                     borderWidth: 1
                 }]
             });
@@ -218,15 +222,17 @@ const Dashboard = () => {
             setLoadingYearEstate(true);
 
             const estadoNome = estados.find(e => e.value === selectedEstate)?.label;
-            const yearEstate = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusYearEstateYear/${estadoNome}/${selectedEstateYear}`);
+            const yearEstate = await axios.get(`/api/focusYearEstateYear/${estadoNome}/${selectedEstateYear}`);
+            
+            const data = Array.isArray(yearEstate.data) ? yearEstate.data : [];
             setYearEstateData({
-                labels: yearEstate.data.map(item => {
+                labels: data.map(item => {
                     const monthObj = months.find(m => m.value === item.mes);
                     return monthObj ? monthObj.label : item.mes;
                 }),
                 datasets: [{
                     label: `Focos de Incêndio - ${estadoNome}`,
-                    data: yearEstate.data.map(item => parseInt(item.quantidade_focos)),
+                    data: data.map(item => parseInt(item.quantidade_focos)),
                     backgroundColor: '#f57c00',
                     borderColor: '#f57c00',
                     borderWidth: 1
@@ -245,10 +251,13 @@ const Dashboard = () => {
             setLoadingHistorical(true);
 
             const estadoNome = estados.find(e => e.value === selectedHistoricalEstate)?.label;
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusEstateAllYears/${estadoNome}`);
-            setHistoricalData(response.data);
+            const response = await axios.get(`/api/focusEstateAllYears/${estadoNome}`);
+            
+            // Garante que o estado será sempre uma lista
+            setHistoricalData(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Erro ao buscar dados históricos:', error);
+            setHistoricalData([]); // Em caso de erro, define como uma lista vazia
         } finally {
             setLoadingHistorical(false);
         }
@@ -258,10 +267,13 @@ const Dashboard = () => {
         try {
             setLoadingDaily(true);
             const estadoNome = estados.find(e => e.value === selectedDailyEstate)?.label;
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/focusDailyEstateMonth/${selectedDailyMonth}/${estadoNome}`);
-            setDailyData(response.data);
+            const response = await axios.get(`/api/focusDailyEstateMonth/${selectedDailyMonth}/${estadoNome}`);
+
+            // Garante que o estado será sempre uma lista
+            setDailyData(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Erro ao buscar dados diários:', error);
+            setDailyData([]); // Em caso de erro, define como uma lista vazia
         } finally {
             setLoadingDaily(false);
         }
