@@ -38,7 +38,11 @@ const News = () => {
       //   `https://gnews.io/api/v4/search?q=queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")&country=br&max=${PAGE_SIZE}${dateFilter}&token=${API_KEY}`
       // );
 
-      const response = await axios.get('/api/noticias'); 
+      const response = await axios.get('/api/noticias', {
+        params: {
+          to: lastPublishedAt
+        }
+      }); 
 
       const newArticles = response.data.articles;
 

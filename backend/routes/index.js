@@ -34,20 +34,52 @@ router.get('/hello', (req, res) => {
  */
 router.get('/noticias', async (req, res) => {
   try {
-    const apiKey = process.env.GNEWS_API_KEY; // <-- Vai ler do .env do back-end
-    
+    // 1. Pega a chave da API do ficheiro .env do servidor
+    const apiKey = process.env.GNEWS_API_KEY;
     if (!apiKey) {
       throw new Error('Chave da API de notícias não configurada no servidor.');
     }
-    const PAGE_SIZE = 10;
-    const lastPublishedAt = req.query.to; 
-    let dateFilter = lastPublishedAt ? `&to=${lastPublishedAt}` : "";
-    const url = `https://gnews.io/api/v4/search?q=queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")&country=br&max=10${dateFilter}&token=${apiKey}`;
+
+    // 2. Prepara o pedido para o GNews
+    const baseUrl = 'https://gnews.io/api/v4/search';
     
-    const response = await axios.get(url);
+    // 3. Define os parâmetros num objeto para que o Axios os codifique corretamente
+    const params = {
+      q: 'queimadas AND (Amazônia OR floresta OR cerrado OR Pantanal OR Norte OR Sul OR Sudeste OR Nordeste OR Caatinga OR Pampa OR "Mata Atlântica" OR "Centro-Oeste" OR Brasil) NOT ("LA" OR "Los Angeles")',
+      country: 'br',
+      max: 10,
+      token: apiKey
+    };
+
+    // 4. Adiciona o filtro de data para a paginação, se ele for enviado pelo front-end
+    if (req.query.to) {
+      params.to = req.query.to;
+    }
+    
+    // 5. Faz o pedido ao GNews
+    const response = await axios.get(baseUrl, { params: params });
+
+    // 6. Adiciona os cabeçalhos para impedir o cache do navegador
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', 0);
+
+    // 7. Envia a resposta do GNews de volta para o front-end
     res.json(response.data);
+
   } catch (error) {
-    console.error('Erro ao buscar notícias do GNews:', error.message);
+    // 8. O nosso "modo detetive" para erros
+    console.error("--- INÍCIO DO ERRO DETALHADO DO AXIOS ---");
+    if (error.response) {
+      console.error('Dados da Resposta:', error.response.data);
+      console.error('Status do Erro:', error.response.status);
+      console.error('Cabeçalhos da Resposta:', error.response.headers);
+    } else if (error.request) {
+      console.error('Nenhuma resposta recebida do GNews:', error.request);
+    } else {
+      console.error('Erro ao configurar o pedido para o GNews:', error.message);
+    }
+    console.error("--- FIM DO ERRO DETALHADO DO AXIOS ---");
     res.status(500).json({ error: 'Falha ao buscar notícias externas.' });
   }
 });
